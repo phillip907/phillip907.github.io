@@ -660,14 +660,21 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
-  preload() {
-    this.add.text(270, 470, 'Loading the party…', { fontSize: '26px', color: '#ffffff' }).setOrigin(0.5);
+  create() {
+    this.add.text(270, 470, 'Loading the party\u2026', { fontSize: '26px', color: '#ffffff' }).setOrigin(0.5);
+    let started = false;
+    const go = () => { if (!started) { started = true; this.scene.start('Story'); } };
+    let pending = CHARACTERS.length * 2;
+    const done = () => { if (--pending <= 0) go(); };
     for (const c of CHARACTERS) {
-      this.load.image('badge-' + c.id, ASSET_URI['badge-' + c.id]);
-      this.load.image('plate-' + c.id, ASSET_URI['plate-' + c.id]);
+      for (const kind of ['badge', 'plate']) {
+        const key = kind + '-' + c.id;
+        const tex = this.textures.addBase64(key, ASSET_URI[key]);
+        if (tex) tex.once('onload', done); else done();
+      }
     }
+    this.time.delayedCall(6000, go);
   }
-  create() { this.scene.start('Story'); }
 }
 
 class StoryScene extends Phaser.Scene {
